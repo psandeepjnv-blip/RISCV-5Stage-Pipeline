@@ -25,11 +25,18 @@ module reg_file (
     end
 
     // Write Logic: Synchronous, happens only on the clock edge.
-    always @(posedge clk) begin
-        if (we && rd != 5'b0) begin
+        integer j;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            for (j = 0; j < 32; j = j + 1) begin
+                registers[j] <= 32'b0;
+            end
+        end else if (we && rd != 5'b0) begin
             registers[rd] <= wd;
         end
     end
+
 
     // Read Logic: Combinational, happens instantly, no clock needed.
     // x0 is hardwired to always read as 0, no matter what was "written" to it.
