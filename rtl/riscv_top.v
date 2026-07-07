@@ -39,18 +39,19 @@ module riscv_top (
     );
 
     // --- 3. Control Unit ---
-    control_unit cu_unit (
-        .opcode(instr_w[6:0]),
-        .funct3(instr_w[14:12]),
-        .funct7_b5(instr_w[30]),
-        .reg_write(reg_write_w),
-        .alu_src(alu_src_w),
-        .mem_to_reg(mem_to_reg_w),
-        .mem_read(mem_read_w),
-        .mem_write(mem_write_w),
-        .branch(branch_w),
-        .alu_op(alu_op_w)
+       control_unit cu_u (
+        .opcode(instr[6:0]),
+        .funct3(instr[14:12]),
+        .funct7_b5(instr[30]),
+        .reg_write(reg_write),
+        .alu_src(alu_src),
+        .mem_to_reg(mem_to_reg),
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+        .branch(branch),
+        .alu_op(alu_op)
     );
+
 
     // --- 4. Register File ---
     reg_file rf_unit (
