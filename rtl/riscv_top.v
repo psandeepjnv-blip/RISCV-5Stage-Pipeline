@@ -27,7 +27,7 @@ module riscv_top (
     pc pc_unit (
         .clk(clk),
         .rst(rst),
-        .stall(1'b0),          // No stalling in single-cycle
+        .stall(1'b0),
         .pc_next(pc_next_w),
         .pc_out(pc_out_w)
     );
@@ -39,36 +39,35 @@ module riscv_top (
     );
 
     // --- 3. Control Unit ---
-       control_unit cu_u (
-        .opcode(instr[6:0]),
-        .funct3(instr[14:12]),
-        .funct7_b5(instr[30]),
-        .reg_write(reg_write),
-        .alu_src(alu_src),
-        .mem_to_reg(mem_to_reg),
-        .mem_read(mem_read),
-        .mem_write(mem_write),
-        .branch(branch),
-        .alu_op(alu_op)
+    control_unit cu_unit (
+        .opcode(instr_w[6:0]),      // Notice the _w here
+        .funct3(instr_w[14:12]),    // Notice the _w here
+        .funct7_b5(instr_w[30]),    // Notice the _w here
+        .reg_write(reg_write_w),
+        .alu_src(alu_src_w),
+        .mem_to_reg(mem_to_reg_w),
+        .mem_read(mem_read_w),
+        .mem_write(mem_write_w),
+        .branch(branch_w),
+        .alu_op(alu_op_w)
     );
-
 
     // --- 4. Register File ---
     reg_file rf_unit (
         .clk(clk),
         .rst(rst),
         .we(reg_write_w),
-        .rs1(instr_w[19:15]),
-        .rs2(instr_w[24:20]),
-        .rd(instr_w[11:7]),
-        .wd(alu_result_w),     // Writing ALU result back to register
+        .rs1(instr_w[19:15]),       // Notice the _w here
+        .rs2(instr_w[24:20]),       // Notice the _w here
+        .rd(instr_w[11:7]),         // Notice the _w here
+        .wd(alu_result_w),
         .rd1(rd1_w),
         .rd2(rd2_w)
     );
 
     // --- 5. Immediate Generator ---
     imm_gen imm_unit (
-        .instr(instr_w),
+        .instr(instr_w),            // Notice the _w here
         .imm_out(imm_ext_w)
     );
 
@@ -85,3 +84,4 @@ module riscv_top (
     );
 
 endmodule
+

@@ -22,9 +22,16 @@ module tb_riscv();
         clk = 0;
         rst = 1;
         #20 rst = 0; // Release reset after 2 clock cycles
-
         #100; // Let the processor run for 100ns
-        $display("Simulation Finished. Check waveforms/riscv_sim.vcd");
-        $finish;
+
+               $display("--------------------------------------------------");
+        $display("Register Check:");
+        // Note: rf_unit is the instance name we used inside riscv_top
+        $display("x5 = %d (Expected: 10)", uut.rf_unit.registers[5]);
+        $display("x6 = %d (Expected: 20)", uut.rf_unit.registers[6]);
+        $display("x7 = %d (Expected: 30)", uut.rf_unit.registers[7]);
+        $display("--------------------------------------------------");
+
+
     end
 endmodule
