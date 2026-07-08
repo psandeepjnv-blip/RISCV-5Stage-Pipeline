@@ -171,5 +171,50 @@ module ex_mem_reg (
     end
 
 endmodule
+// ---------------------------------------------------------
+// MEM/WB Register: Sits between Memory Access and Write-Back.
+// ---------------------------------------------------------
+module mem_wb_reg (
+    input  wire        clk,
+    input  wire        rst,
+
+    // Control signals coming IN from Memory stage
+    input  wire        reg_write_in,
+    input  wire        mem_to_reg_in,
+
+    // Data coming IN from Memory stage
+    input  wire [31:0] mem_data_in,     // Value read from Data Memory (for LW)
+    input  wire [31:0] alu_result_in,   // Value computed by ALU (for ADD/ADDI/etc.)
+    input  wire [4:0]  rd_in,
+
+    // Control signal going OUT to Write-Back stage
+    output reg         reg_write_out,
+    output reg         mem_to_reg_out,
+
+    // Data going OUT to Write-Back stage
+    output reg  [31:0] mem_data_out,
+    output reg  [31:0] alu_result_out,
+    output reg  [4:0]  rd_out
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            reg_write_out  <= 1'b0;
+            mem_to_reg_out <= 1'b0;
+
+            mem_data_out   <= 32'b0;
+            alu_result_out <= 32'b0;
+            rd_out         <= 5'b0;
+        end else begin
+            reg_write_out  <= reg_write_in;
+            mem_to_reg_out <= mem_to_reg_in;
+
+            mem_data_out   <= mem_data_in;
+            alu_result_out <= alu_result_in;
+            rd_out         <= rd_in;
+        end
+    end
+
+endmodule
 
 
