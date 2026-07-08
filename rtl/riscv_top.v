@@ -1,5 +1,5 @@
 // rtl/riscv_top.v
-// 5-Stage Pipelined RISC-V Processor Top-Level (with Forwarding)
+// 5-Stage Pipelined RISC-V Processor Top-Level (with Forwarding + Hazard Detection)
 
 module riscv_top (
     input  wire        clk,
@@ -10,11 +10,12 @@ module riscv_top (
     // 1. IF Stage (Instruction Fetch)
     // -------------------------------------------------------------------------
     wire [31:0] pc_out_if, pc_next_if, instr_if;
+    wire        stall_pipeline;
 
     assign pc_next_if = pc_out_if + 4;
 
     pc pc_u (
-        .clk(clk), .rst(rst), .stall(1'b0),
+        .clk(clk), .rst(rst), .stall(stall_pipeline),
         .pc_next(pc_next_if), .pc_out(pc_out_if)
     );
 
@@ -25,7 +26,7 @@ module riscv_top (
     // --- IF/ID Pipeline Register ---
     wire [31:0] pc_id, instr_id;
     if_id_reg if_id_u (
-        .clk(clk), .rst(rst), .stall(1'b0), .flush(1'b0),
+        .clk(clk), .rst(rst), .stall(stall_pipeline), .flush(1'b0),
         .pc_in(pc_out_if), .instr_in(instr_if),
         .pc_out(pc_id), .instr_out(instr_id)
     );
@@ -49,13 +50,22 @@ module riscv_top (
     );
 
     reg_file rf_u (
-        .clk(clk), .rst(rst), .we(reg_write_wb), // Writes happen from WB stage
+        .clk(clk), .rst(rst), .we(reg_write_wb),
         .rs1(instr_id[19:15]), .rs2(instr_id[24:20]), .rd(rd_wb),
         .wd(wd_wb), .rd1(rd1_id), .rd2(rd2_id)
     );
 
     imm_gen imm_u (
         .instr(instr_id), .imm_out(imm_id)
+    );
+
+    // --- Hazard Detection Unit ---
+    hazard_detection_unit hdu_u (
+        .mem_read_ex(mem_read_ex),
+        .rd_ex(rd_ex),
+        .rs1_id(instr_id[19:15]),
+        .rs2_id(instr_id[24:20]),
+        .stall(stall_pipeline)
     );
 
     // --- ID/EX Pipeline Register ---
@@ -65,7 +75,7 @@ module riscv_top (
     wire reg_write_ex, alu_src_ex, mem_to_reg_ex, mem_read_ex, mem_write_ex, branch_ex;
 
     id_ex_reg id_ex_u (
-        .clk(clk), .rst(rst), .flush(1'b0),
+        .clk(clk), .rst(rst), .flush(stall_pipeline),
         .reg_write_in(reg_write_id), .alu_src_in(alu_src_id), .mem_to_reg_in(mem_to_reg_id),
         .mem_read_in(mem_read_id), .mem_write_in(mem_write_id), .branch_in(branch_id), .alu_op_in(alu_op_id),
         .pc_in(pc_id), .rd1_in(rd1_id), .rd2_in(rd2_id), .imm_ext_in(imm_id),
@@ -77,14 +87,13 @@ module riscv_top (
     );
 
     // -------------------------------------------------------------------------
-    // 3. EX Stage (Execute) - Now with Forwarding
+    // 3. EX Stage (Execute) - With Forwarding
     // -------------------------------------------------------------------------
     wire [31:0] alu_result_ex, alu_b_ex;
     wire [31:0] forward_mux_a, forward_mux_b;
     wire [1:0]  forward_a, forward_b;
     wire        zero_ex;
 
-    // Forwarding Unit Instance
     forwarding_unit fw_u (
         .rs1_ex(rs1_ex),
         .rs2_ex(rs2_ex),
@@ -96,17 +105,14 @@ module riscv_top (
         .forward_b(forward_b)
     );
 
-    // MUX for Operand A (Forwarding)
     assign forward_mux_a = (forward_a == 2'b10) ? alu_result_mem :
                             (forward_a == 2'b01) ? wd_wb          :
                                                     rd1_ex;
 
-    // MUX for Operand B (Forwarding)
     assign forward_mux_b = (forward_b == 2'b10) ? alu_result_mem :
                             (forward_b == 2'b01) ? wd_wb          :
                                                     rd2_ex;
 
-    // Final MUX for ALU input B (Register/Forwarded value vs Immediate)
     assign alu_b_ex = (alu_src_ex) ? imm_ex : forward_mux_b;
 
     alu alu_u (
