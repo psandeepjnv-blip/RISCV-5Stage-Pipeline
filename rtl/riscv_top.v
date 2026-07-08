@@ -1,5 +1,5 @@
 // rtl/riscv_top.v
-// 5-Stage Pipelined RISC-V Processor Top-Level
+// 5-Stage Pipelined RISC-V Processor Top-Level (with Forwarding)
 
 module riscv_top (
     input  wire        clk,
@@ -14,7 +14,7 @@ module riscv_top (
     assign pc_next_if = pc_out_if + 4;
 
     pc pc_u (
-        .clk(clk), .rst(rst), .stall(1'b0), 
+        .clk(clk), .rst(rst), .stall(1'b0),
         .pc_next(pc_next_if), .pc_out(pc_out_if)
     );
 
@@ -36,7 +36,7 @@ module riscv_top (
     wire [31:0] rd1_id, rd2_id, imm_id;
     wire reg_write_id, alu_src_id, mem_to_reg_id, mem_read_id, mem_write_id, branch_id;
     wire [3:0] alu_op_id;
-    
+
     // WB Stage signals needed for Register File write-back
     wire [31:0] wd_wb;
     wire [4:0]  rd_wb;
@@ -77,16 +77,44 @@ module riscv_top (
     );
 
     // -------------------------------------------------------------------------
-    // 3. EX Stage (Execute)
+    // 3. EX Stage (Execute) - Now with Forwarding
     // -------------------------------------------------------------------------
     wire [31:0] alu_result_ex, alu_b_ex;
-    wire zero_ex;
+    wire [31:0] forward_mux_a, forward_mux_b;
+    wire [1:0]  forward_a, forward_b;
+    wire        zero_ex;
 
-    assign alu_b_ex = (alu_src_ex) ? imm_ex : rd2_ex;
+    // Forwarding Unit Instance
+    forwarding_unit fw_u (
+        .rs1_ex(rs1_ex),
+        .rs2_ex(rs2_ex),
+        .rd_mem(rd_mem),
+        .reg_write_mem(reg_write_mem),
+        .rd_wb(rd_wb),
+        .reg_write_wb(reg_write_wb),
+        .forward_a(forward_a),
+        .forward_b(forward_b)
+    );
+
+    // MUX for Operand A (Forwarding)
+    assign forward_mux_a = (forward_a == 2'b10) ? alu_result_mem :
+                            (forward_a == 2'b01) ? wd_wb          :
+                                                    rd1_ex;
+
+    // MUX for Operand B (Forwarding)
+    assign forward_mux_b = (forward_b == 2'b10) ? alu_result_mem :
+                            (forward_b == 2'b01) ? wd_wb          :
+                                                    rd2_ex;
+
+    // Final MUX for ALU input B (Register/Forwarded value vs Immediate)
+    assign alu_b_ex = (alu_src_ex) ? imm_ex : forward_mux_b;
 
     alu alu_u (
-        .a(rd1_ex), .b(alu_b_ex), .alu_op(alu_op_ex),
-        .result(alu_result_ex), .zero(zero_ex)
+        .a(forward_mux_a),
+        .b(alu_b_ex),
+        .alu_op(alu_op_ex),
+        .result(alu_result_ex),
+        .zero(zero_ex)
     );
 
     // --- EX/MEM Pipeline Register ---
@@ -97,7 +125,7 @@ module riscv_top (
     ex_mem_reg ex_mem_u (
         .clk(clk), .rst(rst),
         .reg_write_in(reg_write_ex), .mem_to_reg_in(mem_to_reg_ex), .mem_read_in(mem_read_ex), .mem_write_in(mem_write_ex),
-        .alu_result_in(alu_result_ex), .rd2_in(rd2_ex), .rd_in(rd_ex),
+        .alu_result_in(alu_result_ex), .rd2_in(forward_mux_b), .rd_in(rd_ex),
         .reg_write_out(reg_write_mem), .mem_to_reg_out(mem_to_reg_mem), .mem_read_out(mem_read_mem), .mem_write_out(mem_write_mem),
         .alu_result_out(alu_result_mem), .rd2_out(rd2_mem), .rd_out(rd_mem)
     );
