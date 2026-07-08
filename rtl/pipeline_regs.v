@@ -23,7 +23,8 @@ module if_id_reg (
             instr_out <= 32'b0;
         end else if (flush) begin
             pc_out    <= 32'b0;
-            instr_out <= 32'b0;   // NOP encoding is also all zeros in our design... 
+            instr_out <= 32'h00000013;   // Real NOP: ADDI x0, x0, 0
+   // NOP encoding is also all zeros in our design... 
                                    // actually let's be precise, see explanation below
         end else if (!stall) begin
             pc_out    <= pc_in;
