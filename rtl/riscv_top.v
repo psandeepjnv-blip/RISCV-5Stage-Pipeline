@@ -1,5 +1,6 @@
+
 // rtl/riscv_top.v
-// 5-Stage Pipelined RISC-V Processor Top-Level (with Forwarding + Hazard Detection)
+// 5-Stage Pipelined RISC-V Processor Top-Level (with Forwarding, Hazard Detection, and Branching)
 
 module riscv_top (
     input  wire        clk,
@@ -11,8 +12,11 @@ module riscv_top (
     // -------------------------------------------------------------------------
     wire [31:0] pc_out_if, pc_next_if, instr_if;
     wire        stall_pipeline;
+    wire        branch_taken;
+    wire [31:0] branch_target;
 
-    assign pc_next_if = pc_out_if + 4;
+    // If a branch is taken, jump to the target. Otherwise, PC+4 as normal.
+    assign pc_next_if = branch_taken ? branch_target : (pc_out_if + 4);
 
     pc pc_u (
         .clk(clk), .rst(rst), .stall(stall_pipeline),
@@ -26,7 +30,7 @@ module riscv_top (
     // --- IF/ID Pipeline Register ---
     wire [31:0] pc_id, instr_id;
     if_id_reg if_id_u (
-        .clk(clk), .rst(rst), .stall(stall_pipeline), .flush(1'b0),
+        .clk(clk), .rst(rst), .stall(stall_pipeline), .flush(branch_taken),
         .pc_in(pc_out_if), .instr_in(instr_if),
         .pc_out(pc_id), .instr_out(instr_id)
     );
@@ -38,7 +42,6 @@ module riscv_top (
     wire reg_write_id, alu_src_id, mem_to_reg_id, mem_read_id, mem_write_id, branch_id;
     wire [3:0] alu_op_id;
 
-    // WB Stage signals needed for Register File write-back
     wire [31:0] wd_wb;
     wire [4:0]  rd_wb;
     wire        reg_write_wb;
@@ -59,7 +62,6 @@ module riscv_top (
         .instr(instr_id), .imm_out(imm_id)
     );
 
-    // --- Hazard Detection Unit ---
     hazard_detection_unit hdu_u (
         .mem_read_ex(mem_read_ex),
         .rd_ex(rd_ex),
@@ -75,7 +77,7 @@ module riscv_top (
     wire reg_write_ex, alu_src_ex, mem_to_reg_ex, mem_read_ex, mem_write_ex, branch_ex;
 
     id_ex_reg id_ex_u (
-        .clk(clk), .rst(rst), .flush(stall_pipeline),
+        .clk(clk), .rst(rst), .flush(stall_pipeline || branch_taken),
         .reg_write_in(reg_write_id), .alu_src_in(alu_src_id), .mem_to_reg_in(mem_to_reg_id),
         .mem_read_in(mem_read_id), .mem_write_in(mem_write_id), .branch_in(branch_id), .alu_op_in(alu_op_id),
         .pc_in(pc_id), .rd1_in(rd1_id), .rd2_in(rd2_id), .imm_ext_in(imm_id),
@@ -87,7 +89,7 @@ module riscv_top (
     );
 
     // -------------------------------------------------------------------------
-    // 3. EX Stage (Execute) - With Forwarding
+    // 3. EX Stage (Execute) - With Forwarding and Branch Resolution
     // -------------------------------------------------------------------------
     wire [31:0] alu_result_ex, alu_b_ex;
     wire [31:0] forward_mux_a, forward_mux_b;
@@ -122,6 +124,10 @@ module riscv_top (
         .result(alu_result_ex),
         .zero(zero_ex)
     );
+
+    // Branch resolution: taken only if this instruction IS a branch AND the ALU says equal
+    assign branch_taken  = branch_ex && zero_ex;
+    assign branch_target = pc_ex + imm_ex;
 
     // --- EX/MEM Pipeline Register ---
     wire [31:0] alu_result_mem, rd2_mem;
