@@ -12,5 +12,8 @@
 | Branching | Flush/Jump | Correct (x3=0) |
 
 ## Simulation Screenshot
-![Pipeline Waveform](docs/pipeline_waveform.png.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/psandeepjnv-blip/RISCV-5Stage-Pipeline/main/docs/pipeline_waveform.png.png" alt="Pipeline Waveform" width="800">
+</p>
+
 
