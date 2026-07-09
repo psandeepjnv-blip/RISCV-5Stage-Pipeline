@@ -1,35 +1,34 @@
-# 5-Stage Pipelined RISC-V Processor
+# 5-Stage Pipelined RISC-V Processor (RV32I)
 
-## 1. Overview
-This project is a synthesizable **RV32I RISC-V Processor** implemented with a 5-stage pipeline. It features a complete hazard management system to handle real-world hardware conflicts.
+## 🚀 Overview
+This project is a synthesizable, single-issue **32-bit RISC-V Processor** implemented with a 5-stage pipeline. Designed from scratch in Verilog, it features an advanced hazard management system including **Forwarding**, **Stalling**, and **Pipeline Flushing** to ensure high instruction throughput and computational integrity.
 
-**Key Focus Areas:**
-- **Instruction Parallelism:** Overlapping 5 instructions simultaneously.
-- **Hazard Resolution:** Forwarding, Stalling, and Flushing.
-- **Verification:** Timing-accurate analysis via GTKWave.
+**Key Engineering Focus:**
+- **Instruction Parallelism:** Overlapping 5 distinct instructions in the pipeline.
+- **Data Hazard Resolution:** Implementing combinational forwarding paths to minimize stalls.
+- **Control Hazard Management:** Handling branch speculation and pipeline recovery.
+- **Hardware Verification:** Timing-accurate analysis via Icarus Verilog and GTKWave.
 
-## 2. Architecture (The "How it Works")
-The core is split into 5 distinct stages to maximize throughput:
-- **IF (Fetch):** Retrieves instructions from memory.
-- **ID (Decode):** Decodes instructions and reads registers.
-- **EX (Execute):** Performs ALU operations and manages Forwarding.
-- **MEM (Memory):** Handles Load/Store operations.
-- **WB (Write-Back):** Updates the register file.
+---
 
-[INSERT YOUR MERMAID DIAGRAM HERE]
+## 🧠 Architecture
+The processor implements the classic **RV32I base integer instruction set**. To maximize performance, the core is partitioned into five distinct stages separated by pipeline registers.
 
-## 3. Hazard Management (The "Intelligence")
-- **Data Hazards:** Solved via a **Forwarding Unit** (bypassing the register file).
-- **Load-Use Hazards:** Solved via a **Hazard Detection Unit** (1-cycle stall).
-- **Control Hazards:** Solved via **Pipeline Flushing** (squashing instructions on branch).
+### **Pipeline Stages**
+1.  **IF (Instruction Fetch):** Retrieves the 32-bit instruction from memory and manages the Program Counter.
+2.  **ID (Instruction Decode):** Parses the instruction, generates control signals, and reads from the dual-ported Register File.
+3.  **EX (Execute):** Performs arithmetic/logic operations and houses the **Forwarding Multiplexers**.
+4.  **MEM (Memory Access):** Handles synchronous data reads and writes for Load/Store operations.
+5.  **WB (Write-Back):** Commits results back to the Register File, completing the instruction cycle.
 
-## 4. Interactive Simulation & Verification
-I verified the design using directed assembly tests. You can view the timing analysis below:
-
-[INSERT YOUR WAVEFORM SCREENSHOT HERE]
-
-## 5. Project Structure
-- `rtl/`: Verilog Source Code
-- `tb/`: Testbenches
-- `docs/`: Architecture Whitepaper & Waveforms
-
+```mermaid
+flowchart LR
+    IF[IF: Fetch] --> IFID[IF/ID Reg]
+    IFID --> ID[ID: Decode]
+    ID --> IDEX[ID/EX Reg]
+    IDEX --> EX[EX: Execute/ALU]
+    EX --> EXMEM[EX/MEM Reg]
+    EXMEM --> MEM[MEM: Memory]
+    MEM --> MEMWB[MEM/WB Reg]
+    MEMWB --> WB[WB: Write-Back]
+    WB -.result.-> ID
