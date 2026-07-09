@@ -96,21 +96,4 @@ The simulation waveform below showcases the exact timing relationship during a b
 
 ---
 
-## 👨‍💻 Key Interview Questions & Answers
 
-### Q1: Why is forwarding implemented in the EX stage instead of the ID stage?
-> **Answer:** Implementing forwarding in the EX stage keeps the critical path shorter. If forwarding were done in the ID stage, we would have to route data from the EX/MEM and MEM/WB registers all the way back to the ID stage, which would then pass through the ID/EX registers to the ALU. Placing forwarding multiplexers directly at the ALU inputs in the EX stage minimizes propagation delay, ensuring high frequency and correct data alignment exactly when the ALU executes the operation.
-
-### Q2: How does the processor handle a branch misprediction? How many cycles are lost?
-> **Answer:** This processor implements a static **Predict-Not-Taken** strategy. If the branch evaluates to Taken in the Execute (EX) stage, it means the instructions fetched during the IF and ID stages are incorrect. The control unit asserts a `flush` signal to both the IF/ID and ID/EX registers, clearing their contents to `NOP` (bubbles). Concurrently, the calculated branch target address is loaded into the PC. This results in a **2-cycle branch penalty** where two instructions are discarded.
-
----
-
-## 🎯 Recruiter Summary
-
-*   **Candidate Profile:** Embedded Systems / RTL design engineer with an advanced focus on CPU microarchitecture and timing-accurate hardware verification.
-*   **Key Accomplishment:** Successfully developed and verified a synthesizable **5-Stage Pipelined RV32I Processor** featuring robust hardware hazard mitigation.
-*   **Core Competencies Demonstrated:**
-    *   **Verilog RTL Design:** Modular pipeline partitioning and structural state management.
-    *   **Microarchitectural Hazard Resolution:** Forwarding paths, hazard stalling, and pipeline flushing.
-    *   **Verification Toolchains:** RTL simulation using Icarus Verilog and deep waveform inspection via GTKWave.
