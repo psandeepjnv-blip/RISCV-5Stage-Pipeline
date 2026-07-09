@@ -12,4 +12,5 @@
 | Branching | Flush/Jump | Correct (x3=0) |
 
 ## Simulation Screenshot
-![Waveform](docs/pipeline_waveform.png)
+![Pipeline Waveform](docs/pipeline_waveform.png.png)
+
