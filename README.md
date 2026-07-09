@@ -17,4 +17,3 @@ flowchart LR
     MEM --> MEMWB[MEM/WB Reg]
     MEMWB --> WB[WB: Register File Write]
     WB -.write back.-> ID
-
