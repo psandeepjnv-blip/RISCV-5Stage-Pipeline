@@ -16,6 +16,7 @@ flowchart LR
     EXMEM --> MEM[MEM: Data Memory]
     MEM --> MEMWB[MEM/WB Reg]
     MEMWB --> WB[WB: Register File Write]
-    WB -.write back.-> ID
+     WB -.write back.-> ID
+
 ## Simulation Results
 ![Pipeline Waveform](docs/pipeline_waveform.png)
