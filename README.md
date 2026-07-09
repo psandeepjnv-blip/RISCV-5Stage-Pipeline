@@ -1,19 +1,19 @@
 # 5-Stage Pipelined RISC-V Processor
 
+A synthesizable single-issue, 5-stage pipelined RISC-V (RV32I subset) processor core, written from scratch in Verilog, complete with data hazard forwarding, load-use hazard detection with stalling, and branch resolution with pipeline flushing.
+
 ## Architecture
-(The diagram is here)
 
-## Verification Results
+The processor implements the classic 5-stage pipeline: **Fetch (IF)**, **Decode (ID)**, **Execute (EX)**, **Memory Access (MEM)**, and **Write-Back (WB)**.
 
-| Test Program | Verifies | Result |
-| :--- | :--- | :--- |
-| Arithmetic | R-type/I-type | Correct (x7=30) |
-| Hazards | Forwarding/Stall | Correct (x4=10) |
-| Branching | Flush/Jump | Correct (x3=0) |
-
-## Simulation Screenshot
-<p align="center">
-  <img src="docs/pipeline_waveform.png.png" alt="Pipeline Waveform" width="800">
-</p>
-
-
+```mermaid
+flowchart LR
+    IF[IF: PC + Instruction Memory] --> IFID[IF/ID Reg]
+    IFID --> ID[ID: Register File, Control Unit, Immediate Gen]
+    ID --> IDEX[ID/EX Reg]
+    IDEX --> EX[EX: ALU + Forwarding Muxes]
+    EX --> EXMEM[EX/MEM Reg]
+    EXMEM --> MEM[MEM: Data Memory]
+    MEM --> MEMWB[MEM/WB Reg]
+    MEMWB --> WB[WB: Register File Write]
+    WB -.write back.-> ID
