@@ -1,19 +1,35 @@
 # 5-Stage Pipelined RISC-V Processor
 
-A synthesizable single-issue, 5-stage pipelined RISC-V (RV32I subset) processor core, written from scratch in Verilog, complete with data hazard forwarding, load-use hazard detection with stalling, and branch resolution with pipeline flushing.
+## 1. Overview
+This project is a synthesizable **RV32I RISC-V Processor** implemented with a 5-stage pipeline. It features a complete hazard management system to handle real-world hardware conflicts.
 
-## Architecture
+**Key Focus Areas:**
+- **Instruction Parallelism:** Overlapping 5 instructions simultaneously.
+- **Hazard Resolution:** Forwarding, Stalling, and Flushing.
+- **Verification:** Timing-accurate analysis via GTKWave.
 
-The processor implements the classic 5-stage pipeline: **Fetch (IF)**, **Decode (ID)**, **Execute (EX)**, **Memory Access (MEM)**, and **Write-Back (WB)**.
+## 2. Architecture (The "How it Works")
+The core is split into 5 distinct stages to maximize throughput:
+- **IF (Fetch):** Retrieves instructions from memory.
+- **ID (Decode):** Decodes instructions and reads registers.
+- **EX (Execute):** Performs ALU operations and manages Forwarding.
+- **MEM (Memory):** Handles Load/Store operations.
+- **WB (Write-Back):** Updates the register file.
 
-```mermaid
-flowchart LR
-    IF[IF: PC + Instruction Memory] --> IFID[IF/ID Reg]
-    IFID --> ID[ID: Register File, Control Unit, Immediate Gen]
-    ID --> IDEX[ID/EX Reg]
-    IDEX --> EX[EX: ALU + Forwarding Muxes]
-    EX --> EXMEM[EX/MEM Reg]
-    EXMEM --> MEM[MEM: Data Memory]
-    MEM --> MEMWB[MEM/WB Reg]
-    MEMWB --> WB[WB: Register File Write]
-    WB -.write back.-> ID
+[INSERT YOUR MERMAID DIAGRAM HERE]
+
+## 3. Hazard Management (The "Intelligence")
+- **Data Hazards:** Solved via a **Forwarding Unit** (bypassing the register file).
+- **Load-Use Hazards:** Solved via a **Hazard Detection Unit** (1-cycle stall).
+- **Control Hazards:** Solved via **Pipeline Flushing** (squashing instructions on branch).
+
+## 4. Interactive Simulation & Verification
+I verified the design using directed assembly tests. You can view the timing analysis below:
+
+[INSERT YOUR WAVEFORM SCREENSHOT HERE]
+
+## 5. Project Structure
+- `rtl/`: Verilog Source Code
+- `tb/`: Testbenches
+- `docs/`: Architecture Whitepaper & Waveforms
+
