@@ -13,7 +13,7 @@
 
 ## Simulation Screenshot
 <p align="center">
-  <img src="https://raw.githubusercontent.com/psandeepjnv-blip/RISCV-5Stage-Pipeline/main/docs/pipeline_waveform.png.png" alt="Pipeline Waveform" width="800">
+  <img src="docs/pipeline_waveform.png.png" alt="Pipeline Waveform" width="800">
 </p>
 
 
